@@ -1,0 +1,6 @@
+MIDlet-Name: ROBOTDRIVE
+MIDlet-Version: 1.0.0
+MIDlet-Vendor: FIRST
+MIDlet-1: Robotdrive, , org.amhs.robotdrive.Robotdrive
+MicroEdition-Profile: IMP-1.0
+MicroEdition-Configuration: CLDC-1.1
