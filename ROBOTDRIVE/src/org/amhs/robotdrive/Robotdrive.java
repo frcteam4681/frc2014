@@ -8,6 +8,7 @@
 package org.amhs.robotdrive;
 
 import edu.wpi.first.wpilibj.*;
+import java.lang.Math;
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the SimpleRobot
@@ -23,10 +24,13 @@ public class Robotdrive extends SimpleRobot {
     Victor backLeft = new Victor(3);
     Victor backRight = new Victor(4);
     double ch1, ch3, ch4;
+    public void robotInit() {
+        System.out.println("Robot Initialized");
+    }
     public void autonomous() {
         
     }
-
+    
     /**
      * This function is called once each time the robot enters operator control.
      */
@@ -34,11 +38,11 @@ public class Robotdrive extends SimpleRobot {
         while(isOperatorControl() && isEnabled()){
             ch1 = joy1.getX();
             ch3 = joy2.getX();
-            ch4 = joy2.getY();
-            frontLeft.set(ch3 + ch1 + ch4);
-            backLeft.set(ch3 + ch1 - ch4);
-            frontRight.set(ch3 - ch1 - ch4);
-            backRight.set(ch3 - ch1 + ch4);
+            ch4 = joy2.getY();           
+            frontLeft.set((ch3 + ch1 + ch4)*(ch3 + ch1 + ch4));
+            backLeft.set((ch3 + ch1 - ch4)*(ch3 + ch1 - ch4));
+            frontRight.set((ch3 - ch1 - ch4)*(ch3 - ch1 - ch4));
+            backRight.set((ch3 - ch1 + ch4)*(ch3 - ch1 + ch4));
         }
     }
     
