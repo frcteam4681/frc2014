@@ -8,6 +8,7 @@
 package org.amhs.robotdrive;
 
 import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.wpilibj.DriverStationLCD;
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the SimpleRobot
@@ -23,8 +24,10 @@ public class Robotdrive extends SimpleRobot {
     Victor backLeft = new Victor(3);
     Victor backRight = new Victor(4);
     DigitalInput button1 = new DigitalInput(1);
+    DriverStationLCD station = DriverStationLCD.getInstance();
     double ch1, ch3, ch4;
     boolean old = false;
+    String status;
     public void robotInit() {
         System.out.println("Robot Initialized");
     }
@@ -39,6 +42,15 @@ public class Robotdrive extends SimpleRobot {
         while(isOperatorControl() && isEnabled()){
             if(button1.get() != old){
                 System.out.println(button1.get());
+                old = button1.get();
+                station.clear();
+                if(button1.get() == true){
+                    station.println(DriverStationLCD.Line.kUser1,1, "True");
+                }
+                else
+                {
+                    station.println(DriverStationLCD.Line.kUser1,1, "False");
+                }
                 old = button1.get();
             }
             ch1 = joy1.getX();
