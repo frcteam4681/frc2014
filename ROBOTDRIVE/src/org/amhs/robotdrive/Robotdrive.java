@@ -17,20 +17,27 @@ import edu.wpi.first.wpilibj.DriverStationLCD;
  * directory.
  */
 public class Robotdrive extends SimpleRobot {
+    //Joysitcks 1 and 2
     Joystick joy1 = new Joystick(1);
     Joystick joy2 = new Joystick(2);
+    //Victors for drive
     Victor frontLeft = new Victor(1);
     Victor frontRight = new Victor(2);
     Victor backLeft = new Victor(3);
     Victor backRight = new Victor(4);
+    //Other Victors
     Victor shooter = new Victor(5);
     Victor loader = new Victor(6);
+    //Limit Switch
     DigitalInput button1 = new DigitalInput(1);
-    DriverStationLCD station = DriverStationLCD.getInstance();
+    //Doubles for joystick axis
     double ch1, ch3, ch4;
+    //doubles for motor speed modifiers
+    double frontLeftModifier, frontRightModifier, backLeftModifier, backRightModifier;
     boolean old = false;
     boolean old4 = false;
     String status;
+    //message printed when robot is initialized
     public void robotInit() {
         System.out.println("Robot Initialized");
     }
@@ -43,7 +50,7 @@ public class Robotdrive extends SimpleRobot {
      */
     public void operatorControl() {
         while(isOperatorControl() && isEnabled()){
-           
+           //limit switch basic code
             if(button1.get() != old){
                 System.out.println(button1.get());
                 old = button1.get();
@@ -52,15 +59,27 @@ public class Robotdrive extends SimpleRobot {
             ch1 = joy1.getX();
             ch3 = joy2.getY();
             ch4 = joy2.getX();
+            //Setting motor speeds
+            frontLeft.set(frontLeftModifier * (-(ch3 + ch1 + ch4)));//port 1
+            frontRight.set(frontRightModifier * ((ch3 - ch1 - ch4)));//port 2
+            backLeft.set(backLeftModifier * (-(ch3 + ch1 - ch4)));//port 3
+            backRight.set(backRightModifier * ((ch3 - ch1 + ch4)));//port 4
             
-            frontLeft.set(-(ch3 + ch1 + ch4));//port 1
-            frontRight.set((ch3 - ch1 - ch4));//port 2
-            backLeft.set(-(ch3 + ch1 - ch4));//port 3
-            backRight.set((ch3 - ch1 + ch4));//port 4
-            
-          
-            
-            
+            //Changing the modifiers
+            /*
+            if(joy2.getRawButton()){
+                changeValue(frontLeftModifier);
+            }
+            if(joy2.getRawButton()){
+                changeValue(frontRightModifier);
+            }
+            if(joy2.getRawButton()){
+                changeValue(backLeftModifier);
+            }
+            if(joy2.getRawButton()){
+                changeValue(backRightModifier);
+            }
+            */
             //PRIMITIVE LOADING CODE
          /**if(joy1.getRawButton(4) && old4 == false)
             {
@@ -115,5 +134,15 @@ public class Robotdrive extends SimpleRobot {
                 }
             }
     }
+    /*
+    public void changeValue(double value){
+        if(joy2.getRawButton()){
+            value-=.05;
+        }
+        if(joy2.getRawButton()){
+            value+=.o5;
+        }
+    }
+    */
 }
 
