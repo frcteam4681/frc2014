@@ -26,23 +26,39 @@ public class Robotdrive extends SimpleRobot {
     Victor backLeft = new Victor(3);
     Victor backRight = new Victor(4);
     //Other Victors
-    Victor shooter = new Victor(5);
-    Victor loader = new Victor(6);
+    Victor shooterLeft = new Victor(7);
+    Victor shooterRight = new Victor(6);
+    Victor loader = new Victor(8);
     //Limit Switch
-    DigitalInput button1 = new DigitalInput(1);
+    DigitalInput buttonTop = new DigitalInput(1);
+    DigitalInput buttonBot = new DigitalInput(2);
     //Doubles for joystick axis
     double ch1, ch3, ch4;
     //doubles for motor speed modifiers
-    double frontLeftModifier, frontRightModifier, backLeftModifier, backRightModifier;
+    double frontLeftModifier = 0.9, frontRightModifier = 0.9, backLeftModifier = 1, backRightModifier = 1;
+    double shooterLeftModifier = 1, shooterRightModifier = 1;
+    //FOR COMPETITION, CHANGE ^ TO FINAL
+    //Other Vars
     boolean old = false;
-    boolean old4 = false;
+    boolean isPressed, isPressed2;
     String status;
     //message printed when robot is initialized
     public void robotInit() {
-        System.out.println("Robot Initialized");
+        System.out.println("Robot Initialized I HAVE A PROBLEM");
+        shoot();
     }
     public void autonomous() {
-        
+        //(if hot)
+        shoot();
+        frontRight.set(1);
+        frontLeft.set(1);
+        backLeft.set(1);
+        backRight.set(1);
+        Timer.delay(3);
+        frontRight.set(0);
+        frontLeft.set(0);
+        backLeft.set(0);
+        backRight.set(0);
     }
     
     /**
@@ -50,64 +66,82 @@ public class Robotdrive extends SimpleRobot {
      */
     public void operatorControl() {
         while(isOperatorControl() && isEnabled()){
-           //limit switch basic code
-            if(button1.get() != old){
-                System.out.println(button1.get());
-                old = button1.get();
-            }
+           
+          
             //driving codex
             ch1 = joy1.getX();
             ch3 = joy2.getY();
             ch4 = joy2.getX();
+  
             //Setting motor speeds
-            frontLeft.set(frontLeftModifier * (-(ch3 + ch1 + ch4)));//port 1
-            frontRight.set(frontRightModifier * ((ch3 - ch1 - ch4)));//port 2
-            backLeft.set(backLeftModifier * (-(ch3 + ch1 - ch4)));//port 3
-            backRight.set(backRightModifier * ((ch3 - ch1 + ch4)));//port 4
+            frontLeft.set(frontLeftModifier*specialSquare(-(ch3 + ch1 - ch4)));//port 1
+            frontRight.set(frontRightModifier*specialSquare((ch3 - ch1 + ch4)));//port 2
+            backLeft.set(backLeftModifier*specialSquare(-(ch3 + ch1 + ch4)));//port 3
+            backRight.set(backRightModifier*specialSquare((ch3 - ch1 - ch4)));//port 4
             
             //Changing the modifiers
-            /*
-            if(joy2.getRawButton()){
-                changeValue(frontLeftModifier);
-            }
-            if(joy2.getRawButton()){
-                changeValue(frontRightModifier);
-            }
-            if(joy2.getRawButton()){
-                changeValue(backLeftModifier);
-            }
-            if(joy2.getRawButton()){
-                changeValue(backRightModifier);
-            }
-            */
-            //PRIMITIVE LOADING CODE
-         /**if(joy1.getRawButton(4) && old4 == false)
-            {
-                loader.set(1.0);
-                old4 = true;
-            }
-            else
-            {
-                if(joy1.getRawButton(4) == false)
-                {
-                    loader.set(0.0);
+            
+            if(!isPressed){
+                if(joy2.getRawButton(6)){
+                    frontLeftModifier = changeValue(frontLeftModifier);
+                    isPressed = true;
+                }
+                if(joy2.getRawButton(11)){
+                    frontRightModifier = changeValue(frontRightModifier);
+                    isPressed = true;
+                }
+                if(joy2.getRawButton(7)){
+                    backLeftModifier = changeValue(backLeftModifier);
+                    isPressed = true;
+                }
+                if(joy2.getRawButton(10)){
+                    backRightModifier = changeValue(backRightModifier);
+                    isPressed = true;
                 }
             }
-             */
-            //PRIMITIVE SHOOTING CODE
-            //ALL VALUES ARE UNTESTED AND ARE ROUGH GUESTIMATES
-         /**if(joy1.getRawButton(2) && joy1.getTrigger() && button1.get())
-            {
-                shooter.set(1);
-                Timer.delay(3);
-                shooter.set(0);
-                Timer.delay(.2);
-                shooter.set(-.3);
-                Timer.delay(5);
-                shooter.set(0);
+            if(!joy2.getRawButton(6) && !joy2.getRawButton(11) && !joy2.getRawButton(7) && !joy2.getRawButton(10)){
+                    isPressed = false;
             }
-            */
-    }
+            disp("Front Left: " + frontLeftModifier, 1);
+            disp("Front Right: " + frontRightModifier, 2);
+            disp("Back Left: " + backLeftModifier, 3);
+            disp("Back Right: " + backRightModifier, 4);
+            DriverStationLCD.getInstance().updateLCD();
+            //Shooter modifier set
+            if(!isPressed2)
+            {
+             if(joy1.getRawButton(6)){
+                    shooterLeftModifier = changeValue2(shooterLeftModifier);
+                    isPressed2 = true;
+                }
+                if(joy1.getRawButton(11)){
+                    shooterRightModifier = changeValue2(shooterRightModifier);
+                    isPressed2 = true;
+                }
+            }
+            if(!joy1.getRawButton(6) && !joy1.getRawButton(11) && !joy1.getRawButton(7) && !joy1.getRawButton(10)){
+                    isPressed2 = false;
+            }
+           
+            //PRIMITIVE LOADING CODE
+        /* if(joy1.getRawButton(4))
+          * {
+          *     loader .set(1);
+          * }
+          * else
+          * {
+          *     loader.set(0);
+          * }
+          */
+             
+            //2nd Gen SHOOTING CODE
+            //ALL VALUES ARE UNTESTED AND ARE ROUGH GUESTIMATES
+            if(joy1.getRawButton(2) && joy1.getTrigger())
+            {
+              shoot();
+            }
+            
+        }
     }
     
     /**
@@ -134,15 +168,73 @@ public class Robotdrive extends SimpleRobot {
                 }
             }
     }
-    /*
-    public void changeValue(double value){
-        if(joy2.getRawButton()){
-            value-=.05;
+    
+    public double changeValue(double value){
+        if(joy2.getRawButton(8)){
+            return(value-=.02);
         }
-        if(joy2.getRawButton()){
-            value+=.o5;
+        if(joy2.getRawButton(9)){
+            return(value+=.02);
         }
+        return(value);
     }
+    public double changeValue2(double value){
+        if(joy1.getRawButton(8)){
+            return(value-=.02);
+        }
+        if(joy1.getRawButton(9)){
+            return(value+=.02);
+        }
+        return(value);
+    }
+    public void shoot()
+    {
+      while(!buttonTop.get())
+          {
+              shooterLeft.set(shooterLeftModifier * ((1)));
+              shooterRight.set(-(shooterRightModifier * 1));
+          }
+              shooterLeft.set(-0.5);
+              shooterRight.set(0.5);
+              Timer.delay(0.2);
+              shooterLeft.set(0);
+              shooterRight.set(0);
+   /* while(!buttonBot.get())
+    *      {  
+    *             shooterLeft.set(shooterLeftModifier * (-.5));
+    *             shooterRight.set(-(shooterRightModifier * -.5));
+    *       }
     */
+              //shooterLeft.set(0);
+              //shooterRight.set(0);
+            
+    }
+    public void disp(String msg, int line)
+    {
+        switch(line)
+        {
+            case 1:
+                DriverStationLCD.getInstance().println(DriverStationLCD.Line.kUser2, 1, msg);
+                break;
+            case 2:
+                DriverStationLCD.getInstance().println(DriverStationLCD.Line.kUser3, 1, msg);
+                break;
+            case 3:
+                DriverStationLCD.getInstance().println(DriverStationLCD.Line.kUser4, 1, msg);
+                break;
+            case 4:
+                DriverStationLCD.getInstance().println(DriverStationLCD.Line.kUser5, 1, msg);
+                break;
+            case 5:
+                DriverStationLCD.getInstance().println(DriverStationLCD.Line.kUser6, 1, msg);
+                break;
+            default:
+                DriverStationLCD.getInstance().println(DriverStationLCD.Line.kUser2, 1, msg);
+                break;
+                
+        }
+       
+    }
+    
 }
 
