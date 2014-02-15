@@ -31,20 +31,22 @@ public class Robotdrive extends SimpleRobot {
     Victor shooterRight = new Victor(6);
     Victor loader = new Victor(8);
     //Limit Switch
-    DigitalInput buttonTop = new DigitalInput(1);
-    DigitalInput buttonBot = new DigitalInput(2);
-    DigitalInput buttonTop_2 = new DigitalInput(3);
-    DigitalInput buttonBot_2 = new DigitalInput(4);
+    DigitalInput buttonTopLeft = new DigitalInput(1);
+    DigitalInput buttonBotLeft = new DigitalInput(2);
+    DigitalInput buttonTopRight = new DigitalInput(3);
+    DigitalInput buttonBotRight = new DigitalInput(4);
+    Timer timer = new Timer();
     //Doubles for joystick axis
     double ch1, ch3, ch4;
     //doubles for motor speed modifiers
     double frontLeftModifier = 0.9, frontRightModifier = 0.9, backLeftModifier = 1, backRightModifier = 1;
-    double shooterLeftModifier = 0.4, shooterRightModifier = 0.4;
+    double shooterLeftModifier = 1, shooterRightModifier = 1;
     //FOR COMPETITION, CHANGE ^ TO FINAL
     //Other Vars
+    boolean reversed = false;
     boolean old = false;
     boolean isPressed, isPressed2;
-    String status;
+    //String status;
 
     //message printed when robot is initialized
     public void robotInit() {
@@ -76,17 +78,35 @@ public class Robotdrive extends SimpleRobot {
         DriverStationLCD.getInstance().updateLCD();
         while (isOperatorControl() && isEnabled()) {
 
-            //driving codex
+            //-----------------------------
+            //DRIVING CODE
+            //REVERSE WITH JOY 1 BUTTON 3
+            //-----------------------------
             ch1 = joy1.getX();
             ch3 = joy2.getY();
             ch4 = joy2.getX();
-
-            //Setting motor speeds
-            frontLeft.set(frontLeftModifier * specialSquare(-(ch3 + ch1 - ch4)));//port 1
-            frontRight.set(frontRightModifier * specialSquare((ch3 - ch1 + ch4)));//port 2
-            backLeft.set(backLeftModifier * specialSquare(-(ch3 + ch1 + ch4)));//port 3
-            backRight.set(backRightModifier * specialSquare((ch3 - ch1 - ch4)));//port 4
-
+            reversed = joy1.getRawButton(3);
+            if(!reversed)
+            {
+                 frontLeft.set(frontLeftModifier * specialSquare(-(ch3 + ch1 - ch4)));//port 1
+                 frontRight.set(frontRightModifier * specialSquare((ch3 - ch1 + ch4)));//port 2
+                 backLeft.set(backLeftModifier * specialSquare(-(ch3 + ch1 + ch4)));//port 3
+                 backRight.set(backRightModifier * specialSquare((ch3 - ch1 - ch4)));//port 4
+            }
+            else
+            {
+                 frontLeft.set(frontLeftModifier * specialSquare((ch3 + ch1 - ch4)));//port 1
+                 frontRight.set(frontRightModifier * specialSquare(-(ch3 - ch1 + ch4)));//port 2
+                 backLeft.set(backLeftModifier * specialSquare((ch3 + ch1 + ch4)));//port 3
+                 backRight.set(backRightModifier * specialSquare(-(ch3 - ch1 - ch4)));//port 4
+            }
+          
+            //--------------------------------------
+            //MODIIER CHANGING
+            //DRIVING MODIFIERS ARE ON JOY 2
+            //SHOOTING MODIFIERS ARE 6 AND 11 on Joy 1
+            //--------------------------------------
+            
             //Changing the modifiers
             if (!isPressed) {
                 if (joy2.getRawButton(6)) {
@@ -109,12 +129,7 @@ public class Robotdrive extends SimpleRobot {
             if (!joy2.getRawButton(6) && !joy2.getRawButton(11) && !joy2.getRawButton(7) && !joy2.getRawButton(10)) {
                 isPressed = false;
             }
-            disp("Front Left: " + frontLeftModifier, 1);
-            disp("Front Right: " + frontRightModifier, 2);
-            disp("Back Left: " + backLeftModifier, 3);
-            disp("Back Right: " + backRightModifier, 4);
-            DriverStationLCD.getInstance().updateLCD();
-            //Shooter modifier set
+            //shooter
             if (!isPressed2) {
                 if (joy1.getRawButton(6)) {
                     shooterLeftModifier = changeValue2(shooterLeftModifier);
@@ -125,26 +140,71 @@ public class Robotdrive extends SimpleRobot {
                     isPressed2 = true;
                 }
             }
-            if (!joy1.getRawButton(6) && !joy1.getRawButton(11) && !joy1.getRawButton(7) && !joy1.getRawButton(10)) {
+            if (!joy1.getRawButton(6) && !joy1.getRawButton(11)) {
                 isPressed2 = false;
             }
-
-            //PRIMITIVE LOADING CODE
-        /* if(joy1.getRawButton(4))
-             * {
-             *     loader .set(1);
-             * }
-             * else
-             * {
-             *     loader.set(0);
-             * }
-             */
-            //2nd Gen SHOOTING CODE
-            //ALL VALUES ARE UNTESTED AND ARE ROUGH GUESTIMATES
-            if (joy1.getRawButton(2) && joy1.getTrigger()) {
+           
+            //---------------------------------
+            //DRIVER STATION OUTPUT
+            //disp(String message), int line); Line is from 1-6
+            //Default is line 1
+            //MESSAGE IS THIS LONG!
+            //--------------------------------
+            disp("Front Left: " + frontLeftModifier, 1);
+            disp("Front Right: " + frontRightModifier, 2);
+            disp("Back Left: " + backLeftModifier, 3);
+            disp("Back Right: " + backRightModifier, 4);
+            if(!reversed)
+            {
+                disp("  FORWARD", 5);
+            }
+            else
+            {
+                disp("BACKWARDS", 5);
+            }
+            DriverStationLCD.getInstance().updateLCD();
+           
+           //-------------------------------------
+           //LOADING CODE
+           //JOY 2 BUTTON 4 LOADS
+           //JOY 1 BUTTON 5 REVERSES
+           //-------------------------------------
+           if(joy2.getRawButton(4) || joy2.getRawButton(5))
+           {
+               if(joy2.getRawButton(4))
+               {
+                   loader.set(-1);
+               }
+               else
+               {
+                   loader.set(1);
+               }
+           }
+           else
+           {
+               loader.set(0);
+           }
+           //------------------------------
+           //SHOOTING CODE
+           //FIRE WITH JOY 2 TRIGGER AND BUTTION 2
+           //RUNS TILL IT HITS EITHER LIMIT SWITCH
+           //EMERGENCY STOP IS JOY 1 TRIGGER AND JOY 2 TRIGGER
+           //------------------------------
+             
+            if(joy2.getRawButton(2))
+            {
+                shooterLeft.set(.4);
+                shooterRight.set(-.4);
+            }
+            else
+            {
+                shooterLeft.set(0);
+                shooterRight.set(0);
+            }
+            if (joy2.getTrigger() && joy2.getRawButton(2)) {
                 shoot();
             }
-
+            //END OPERATOR CONTROLL CODE
         }
     }
 
@@ -155,11 +215,19 @@ public class Robotdrive extends SimpleRobot {
 
     }
 
+    //This function is called each time the robot is dissabled
     public void disabled() {
         DriverStationLCD.getInstance().clear();
+        disp("Turn Me On", 1);
         DriverStationLCD.getInstance().updateLCD();
     }
 
+    //----------------------------------
+    //OTHER FUNCTIONS
+    //----------------------------------
+    
+    //SQUARES THE IMPUT AND KEEPS NEGATIVES
+    //INCLUDES DEAD ZONES
     public double specialSquare(double setMe) {
         if (setMe > .05) {
             return setMe * setMe;
@@ -171,7 +239,7 @@ public class Robotdrive extends SimpleRobot {
             }
         }
     }
-
+    //MODIFIES THE VALUE OF THE DRIVE MODIFIER THAT IS GIVEN TO IT
     public double changeValue(double value) {
         if (joy2.getRawButton(8)) {
             return (value -= .02);
@@ -182,6 +250,7 @@ public class Robotdrive extends SimpleRobot {
         return (value);
     }
 
+    //MODIFIES THE SHOOTER MODIEFIER THAT IS GIVEN TO IT
     public double changeValue2(double value) {
         if (joy1.getRawButton(8)) {
             return (value -= .02);
@@ -192,19 +261,27 @@ public class Robotdrive extends SimpleRobot {
         return (value);
     }
 
+    //SHOOT FUNCTION
+    //FAILSAFES:
+    //1 TOP LEFT BUTTON
+    //2 TOP RIGHT BUTON
+    //3 BOTH TRIGGERS 
     public void shoot() {
-        while (!buttonTop.get()) {
-            shooterLeft.set(shooterLeftModifier * ((1)));
-            shooterRight.set(-(shooterRightModifier * 1));
+        while (!buttonTopLeft.get()) {
+            shooterLeft.set(1);
+            shooterRight.set(-1);
         }
-        while (!buttonBot.get()) {
+        while (!buttonBotLeft.get()) {
             shooterLeft.set(-0.4);
             shooterRight.set(0.4);
         }
-            shooterLeft.set(0);
-            shooterRight.set(0);
+        shooterLeft.set(0);
+        shooterRight.set(0);
+            
     }
 
+    //DISPLAY CODE
+    //SEE DRIVER STATION OUTPUT
     public void disp(String msg, int line) {
         switch (line) {
             case 1:
@@ -227,7 +304,7 @@ public class Robotdrive extends SimpleRobot {
                 break;
 
         }
-
+        //END ROBOT CODE
     }
-
+    
 }
