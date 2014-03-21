@@ -19,30 +19,36 @@ import edu.wpi.first.wpilibj.DriverStationLCD;
 public class Robotdrive extends SimpleRobot {
 
     //Joysitcks 1 and 2
-    Joystick joy1 = new Joystick(1);
-    Joystick joy2 = new Joystick(2);
-    //Victors for drive
-    Victor frontLeft = new Victor(1);
-    Victor frontRight = new Victor(2);
-    Victor backLeft = new Victor(3);
-    Victor backRight = new Victor(4);
-    //Other Victors
-    Victor shooterLeft = new Victor(7);
-    Victor shooterRight = new Victor(6);
-    Victor loader = new Victor(8);
-    //Limit Switch
+    Joystick joyLeft = new Joystick(1);
+    Joystick joyRight = new Joystick(2);
+    //Victors for drive Ports 1-4
+    Victor frontLeftMotor = new Victor(1);
+    Victor frontRightMotor = new Victor(2);
+    Victor backLeftMotor = new Victor(3);
+    Victor backRightMotor = new Victor(4);
+    //Other Motor controllers 
+    Victor shooterLeftMotor = new Victor(7);
+    Victor shooterRightMotor = new Victor(6);
+    Talon loadMotor = new Talon(8);
+    Talon loaderRaiseLowerMotor = new Talon(9);
+    //Other Variables for loader
+    int isRaising = 1;
+    boolean start = true;
+    //Limit Switch Ports 1-4
     DigitalInput buttonTopLeft = new DigitalInput(1);
     DigitalInput buttonBotLeft = new DigitalInput(2);
     DigitalInput buttonTopRight = new DigitalInput(3);
     DigitalInput buttonBotRight = new DigitalInput(4);
-    Timer timer = new Timer();
+   //Timers for shooter and loader
+    Timer loadingArmTimer = new Timer();
+    Timer shootingTimer = new Timer();
     //Doubles for joystick axis
-    double ch1, ch3, ch4;
+    double joyLeftXAxis, joyRightXAxis, joyRightYAxis;
     //doubles for motor speed modifiers
     double frontLeftModifier = 0.9, frontRightModifier = 0.9, backLeftModifier = 1, backRightModifier = 1;
     double shooterLeftModifier = 1, shooterRightModifier = 1;
     //FOR COMPETITION, CHANGE ^ TO FINAL
-    //Other Vars
+    //Other  Assorted Vars
     boolean reversed = false;
     boolean old = false;
     boolean isPressed, isPressed2;
@@ -50,24 +56,29 @@ public class Robotdrive extends SimpleRobot {
 
     //message printed when robot is initialized
     public void robotInit() {
-        System.out.println("Robot Initialized");
+        System.out.println("/n/n-----------------------/nRobot Initialized/n--------------------------/n/n");
         disp("Initialized", 1);
         DriverStationLCD.getInstance().updateLCD();
         Timer.delay(2);
     }
 
     public void autonomous() {
-        //(if hot)
-        shoot();
-        frontRight.set(1);
-        frontLeft.set(1);
-        backLeft.set(1);
-        backRight.set(1);
-        Timer.delay(3);
-        frontRight.set(0);
-        frontLeft.set(0);
-        backLeft.set(0);
-        backRight.set(0);
+       
+        frontLeftMotor.set(.60);
+        frontRightMotor.set(-.60);
+        backLeftMotor.set(.60);
+        backRightMotor.set(-.60);
+        Timer.delay(3.5);
+        frontLeftMotor.set(0);
+        frontRightMotor.set(0);
+        backLeftMotor.set(0);
+        backRightMotor.set(0);
+        shooterLeftMotor.set(0.55);
+        shooterRightMotor.set(-0.55);
+        Timer.delay(0.4);
+        shooterLeftMotor.set(0);
+        shooterRightMotor.set(0);       
+        pass();
     }
 
     /**
@@ -82,23 +93,23 @@ public class Robotdrive extends SimpleRobot {
             //DRIVING CODE
             //REVERSE WITH JOY 1 BUTTON 3
             //-----------------------------
-            ch1 = joy1.getX();
-            ch3 = joy2.getY();
-            ch4 = joy2.getX();
-            reversed = joy1.getRawButton(3);
+            joyLeftXAxis = joyLeft.getX();
+            joyRightXAxis = joyRight.getY();
+            joyRightYAxis = joyRight.getX();
+            reversed = joyLeft.getRawButton(8);
             if(!reversed)
             {
-                 frontLeft.set(frontLeftModifier * specialSquare(-(ch3 + ch1 - ch4)));//port 1
-                 frontRight.set(frontRightModifier * specialSquare((ch3 - ch1 + ch4)));//port 2
-                 backLeft.set(backLeftModifier * specialSquare(-(ch3 + ch1 + ch4)));//port 3
-                 backRight.set(backRightModifier * specialSquare((ch3 - ch1 - ch4)));//port 4
+                 frontLeftMotor.set(frontLeftModifier * specialSquare(-(joyRightXAxis + joyLeftXAxis - joyRightYAxis)));//port 1
+                 frontRightMotor.set(frontRightModifier * specialSquare((joyRightXAxis - joyLeftXAxis + joyRightYAxis)));//port 2
+                 backLeftMotor.set(backLeftModifier * specialSquare(-(joyRightXAxis + joyLeftXAxis + joyRightYAxis)));//port 3
+                 backRightMotor.set(backRightModifier * specialSquare((joyRightXAxis - joyLeftXAxis - joyRightYAxis)));//port 4
             }
             else
             {
-                 frontLeft.set(frontLeftModifier * specialSquare((ch3 + ch1 - ch4)));//port 1
-                 frontRight.set(frontRightModifier * specialSquare(-(ch3 - ch1 + ch4)));//port 2
-                 backLeft.set(backLeftModifier * specialSquare((ch3 + ch1 + ch4)));//port 3
-                 backRight.set(backRightModifier * specialSquare(-(ch3 - ch1 - ch4)));//port 4
+                 frontLeftMotor.set(frontLeftModifier * specialSquare((joyRightXAxis + joyLeftXAxis - joyRightYAxis)));//port 1
+                 frontRightMotor.set(frontRightModifier * specialSquare(-(joyRightXAxis - joyLeftXAxis + joyRightYAxis)));//port 2
+                 backLeftMotor.set(backLeftModifier * specialSquare((joyRightXAxis + joyLeftXAxis + joyRightYAxis)));//port 3
+                 backRightMotor.set(backRightModifier * specialSquare(-(joyRightXAxis - joyLeftXAxis - joyRightYAxis)));//port 4
             }
           
             //--------------------------------------
@@ -109,38 +120,38 @@ public class Robotdrive extends SimpleRobot {
             
             //Changing the modifiers
             if (!isPressed) {
-                if (joy2.getRawButton(6)) {
+                if (joyRight.getRawButton(6)) {
                     frontLeftModifier = changeValue(frontLeftModifier);
                     isPressed = true;
                 }
-                if (joy2.getRawButton(11)) {
+                if (joyRight.getRawButton(11)) {
                     frontRightModifier = changeValue(frontRightModifier);
                     isPressed = true;
                 }
-                if (joy2.getRawButton(7)) {
+                if (joyRight.getRawButton(7)) {
                     backLeftModifier = changeValue(backLeftModifier);
                     isPressed = true;
                 }
-                if (joy2.getRawButton(10)) {
+                if (joyRight.getRawButton(10)) {
                     backRightModifier = changeValue(backRightModifier);
                     isPressed = true;
                 }
             }
-            if (!joy2.getRawButton(6) && !joy2.getRawButton(11) && !joy2.getRawButton(7) && !joy2.getRawButton(10)) {
+            if (!joyRight.getRawButton(6) && !joyRight.getRawButton(11) && !joyRight.getRawButton(7) && !joyRight.getRawButton(10)) {
                 isPressed = false;
             }
             //shooter
             if (!isPressed2) {
-                if (joy1.getRawButton(6)) {
+                if (joyLeft.getRawButton(6)) {
                     shooterLeftModifier = changeValue2(shooterLeftModifier);
                     isPressed2 = true;
                 }
-                if (joy1.getRawButton(11)) {
+                if (joyLeft.getRawButton(11)) {
                     shooterRightModifier = changeValue2(shooterRightModifier);
                     isPressed2 = true;
                 }
             }
-            if (!joy1.getRawButton(6) && !joy1.getRawButton(11)) {
+            if (!joyLeft.getRawButton(6) && !joyLeft.getRawButton(11)) {
                 isPressed2 = false;
             }
            
@@ -167,42 +178,84 @@ public class Robotdrive extends SimpleRobot {
            //-------------------------------------
            //LOADING CODE
            //JOY 2 BUTTON 4 LOADS
-           //JOY 1 BUTTON 5 REVERSES
+           //JOY 2 BUTTON 5 REVERSES
            //-------------------------------------
-           if(joy2.getRawButton(4) || joy2.getRawButton(5))
+           if(joyRight.getRawButton(4) || joyRight.getRawButton(5))
            {
-               if(joy2.getRawButton(4))
+               if(joyRight.getRawButton(4))
                {
-                   loader.set(-1);
+                   loadMotor.set(-1);
                }
                else
                {
-                   loader.set(1);
+                   loadMotor.set(1);
                }
            }
            else
            {
-               loader.set(0);
+               loadMotor.set(0);
            }
            //------------------------------
+           //LOADING ARM CODE
+           //RAISE/LOWER WITH ONE BUTTON
+           //ALTERNATES BETWEEN UP AND DOWN
+           //------------------------------
+               
+               if(start && joyLeft.getRawButton(3))
+               {
+                   loadingArmTimer.start();
+                   start = false;
+                   System.out.println(isRaising);
+               }
+               if(!start)
+               {
+                    loaderRaiseLowerMotor.set(isRaising);
+               }
+               if(loadingArmTimer.get() > 3)
+               {
+                   isRaising = isRaising*-1;
+                   System.out.println(isRaising);
+                   loadingArmTimer.stop();
+                   loadingArmTimer.reset();
+                   loaderRaiseLowerMotor.set(0);
+                   start = true;
+               }
+           
            //SHOOTING CODE
            //FIRE WITH JOY 2 TRIGGER AND BUTTION 2
            //RUNS TILL IT HITS EITHER LIMIT SWITCH
            //EMERGENCY STOP IS JOY 1 TRIGGER AND JOY 2 TRIGGER
            //------------------------------
-             
-            if(joy2.getRawButton(2))
+            if(joyRight.getRawButton(2))
             {
-                shooterLeft.set(.4);
-                shooterRight.set(-.4);
+                shooterLeftMotor.set(.4);
+                shooterRightMotor.set(-.4);
             }
             else
             {
-                shooterLeft.set(0);
-                shooterRight.set(0);
+                shooterLeftMotor.set(0);
+                shooterRightMotor.set(0);
             }
-            if (joy2.getTrigger() && joy2.getRawButton(2)) {
+            if (joyRight.getTrigger() && joyRight.getRawButton(2)) {
                 shoot();
+            }
+            //-----------------------------
+            //PASSING CODE
+            //CONTROLS ARE THE SAME AS THE LEFT SIDE
+            //EXCEPT ITS ON THE LEFT SIDE
+            //-----------------------------
+            if(joyLeft.getRawButton(2))
+            {
+                shooterLeftMotor.set(.4);
+                shooterRightMotor.set(-.4);
+            }
+            else
+            {
+                shooterLeftMotor.set(0);
+                shooterRightMotor.set(0);
+            }
+            if (joyLeft.getTrigger() && joyLeft.getRawButton(2)) {
+                pass();
             }
             //END OPERATOR CONTROLL CODE
         }
@@ -217,9 +270,7 @@ public class Robotdrive extends SimpleRobot {
 
     //This function is called each time the robot is dissabled
     public void disabled() {
-        DriverStationLCD.getInstance().clear();
-        disp("Turn Me On", 1);
-        DriverStationLCD.getInstance().updateLCD();
+        
     }
 
     //----------------------------------
@@ -241,10 +292,10 @@ public class Robotdrive extends SimpleRobot {
     }
     //MODIFIES THE VALUE OF THE DRIVE MODIFIER THAT IS GIVEN TO IT
     public double changeValue(double value) {
-        if (joy2.getRawButton(8)) {
+        if (joyRight.getRawButton(8)) {
             return (value -= .02);
         }
-        if (joy2.getRawButton(9)) {
+        if (joyRight.getRawButton(9)) {
             return (value += .02);
         }
         return (value);
@@ -252,10 +303,10 @@ public class Robotdrive extends SimpleRobot {
 
     //MODIFIES THE SHOOTER MODIEFIER THAT IS GIVEN TO IT
     public double changeValue2(double value) {
-        if (joy1.getRawButton(8)) {
+        if (joyLeft.getRawButton(8)) {
             return (value -= .02);
         }
-        if (joy1.getRawButton(9)) {
+        if (joyLeft.getRawButton(9)) {
             return (value += .02);
         }
         return (value);
@@ -265,20 +316,84 @@ public class Robotdrive extends SimpleRobot {
     //FAILSAFES:
     //1 TOP LEFT BUTTON
     //2 TOP RIGHT BUTON
-    //3 BOTH TRIGGERS 
     public void shoot() {
-        while (!buttonTopLeft.get()) {
-            shooterLeft.set(1);
-            shooterRight.set(-1);
-        }
-        while (!buttonBotLeft.get()) {
-            shooterLeft.set(-0.4);
-            shooterRight.set(0.4);
-        }
-        shooterLeft.set(0);
-        shooterRight.set(0);
+       
+        shootingTimer.start();
+        theRobot:
+        while (!buttonTopLeft.get() && !buttonTopRight.get()) {
             
+           
+            
+            shooterLeftMotor.set(1);
+            shooterRightMotor.set(-1);
+            
+            if(shootingTimer.get() >= 1.5){
+                break theRobot;
+            }
+        }
+        while (!buttonBotLeft.get() && !buttonBotRight.get()) {
+            shooterLeftMotor.set(-0.4);
+            shooterRightMotor.set(0.4);
+        }
+        shooterLeftMotor.set(0);
+        shooterRightMotor.set(0);
+        shootingTimer.stop();
     }
+//SHOOT FUNCTION
+    //FAILSAFES:
+    //1 TOP LEFT BUTTON
+    //2 TOP RIGHT BUTON
+    // values subject to change
+    public void pass() {
+       
+        shootingTimer.start();
+        theRobot:
+        if(!joyLeft.getRawButton(3))
+        {
+        while (!buttonTopLeft.get() && !buttonTopRight.get()) {
+            
+           
+            
+            shooterLeftMotor.set(.8);
+            shooterRightMotor.set(-.8);
+            
+            if(shootingTimer.get() >= 1.5){
+                break theRobot;
+            }
+        }
+        while (!buttonBotLeft.get() && !buttonBotRight.get()) {
+            shooterLeftMotor.set(-0.1);
+            shooterRightMotor.set(0.1);
+        }
+        shooterLeftMotor.set(0);
+        shooterRightMotor.set(0);
+        }
+        else
+        {
+            while (!buttonTopLeft.get() && !buttonTopRight.get()) {
+            
+           
+            
+            shooterLeftMotor.set(.6);
+            shooterRightMotor.set(-.6);
+            
+            if(shootingTimer.get() >= 1.5){
+                break theRobot;
+            }
+        }
+        while (!buttonBotLeft.get() && !buttonBotRight.get()) {
+            shooterLeftMotor.set(-0.1);
+            shooterRightMotor.set(0.1);
+        }
+        shooterLeftMotor.set(0);
+        shooterRightMotor.set(0);
+        }
+        shootingTimer.stop();
+    }
+    //LOADER ARM FUNCTION
+    //RAISES OR LOWERS THE LOADER ARM
+    //VALUES ARE UNTESTED!!!!!!!!!!!!!!!
+
 
     //DISPLAY CODE
     //SEE DRIVER STATION OUTPUT
